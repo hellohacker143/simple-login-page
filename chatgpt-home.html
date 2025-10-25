@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChatGPT Home - Simple UI</title>
+  <style>
+    :root { --bg:#0f1115; --panel:#151822; --panel-2:#0c0f17; --text:#e7e9ee; --muted:#a6adc8; --brand:#10a37f; --border:#23283a; --accent:#2c334a; --shadow:0 8px 28px rgba(0,0,0,.35); }
+    .light { --bg:#f7f8fb; --panel:#ffffff; --panel-2:#f1f3f9; --text:#0f1320; --muted:#424a63; --brand:#10a37f; --border:#e6e8f0; --accent:#e9edf7; --shadow:0 12px 24px rgba(2,6,23,.08); }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--text); display:grid; grid-template-columns:280px 1fr; overflow:hidden; transition:background .3s,color .3s}
+    aside{border-right:1px solid var(--border); background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%); padding:16px; display:flex; flex-direction:column; gap:12px}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;margin-bottom:6px}
+    .badge{color:var(--brand);font-weight:600;font-size:12px;opacity:.9}
+    .side-actions{display:grid;gap:8px}
+    .btn{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:transform .06s, background .2s, border-color .2s}
+    .btn:hover{background:var(--accent);border-color:#3a415c}
+    .btn:active{transform:translateY(1px)}
+    .history{margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);overflow:auto;flex:1;display:grid;gap:6px}
+    .chat-item{padding:8px 10px;border-radius:8px;color:var(--muted);border:1px solid transparent;cursor:pointer}
+    .chat-item:hover{background:var(--accent);border-color:var(--border);color:var(--text)}
+    .footer-controls{display:flex;gap:8px;align-items:center}
+    .switch{position:relative;width:44px;height:24px;background:var(--accent);border-radius:999px;border:1px solid var(--border);cursor:pointer}
+    .switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .25s; box-shadow:var(--shadow)}
+    .light .switch::after{transform:translateX(20px)}
+    main{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+    header.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel)}
+    .search{flex:1;display:flex;gap:8px}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel-2);color:var(--text)}
+    .feed{position:relative;overflow:auto;padding:24px;display:grid;gap:14px;background:radial-gradient(1200px 600px at 40% -20%, rgba(16,163,127,.08), transparent 60%), var(--bg)}
+    .msg{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:flex-start}
+    .avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:linear-gradient(135deg,#2dd4bf,#10a37f);color:#0a0f14}
+    .ai{background:linear-gradient(135deg,#a78bfa,#6366f1);color:#fff}
+    .bubble{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+    .bubble p{margin:0;line-height:1.6;color:var(--text)}
+    .composer{padding:14px 18px;border-top:1px solid var(--border);background:linear-gradient(180deg,var(--panel),var(--panel-2));display:grid;gap:10px}
+    .compose-bar{display:flex;gap:10px;align-items:flex-end}
+    textarea.input{flex:1;min-height:52px;max-height:160px;resize:vertical;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:12px 14px;outline:none}
+    .primary{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(135deg,#10a37f,#2dd4bf);color:#081014;cursor:pointer;font-weight:700}
+    .toolbar{display:flex;gap:8px;color:var(--muted);align-items:center}
+    .kbd{font:600 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;border:1px solid var(--border);padding:2px 6px;border-radius:6px;background:var(--panel-2)}
+    @media (max-width:920px){body{grid-template-columns:64px 1fr} aside .label,.logo .text{display:none}}
+    @media (max-width:640px){.toolbar, header.topbar .search{display:none}}
+    .fade-in{animation:fade .3s ease both}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}}
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="logo">
+      <div class="avatar ai" style="width:28px;height:28px;font-size:12px">GPT</div>
+      <div class="text">ChatGPT UI</div>
+      <span class="badge">Demo</span>
+    </div>
+    <div class="side-actions">
+      <button class="btn" onclick="newChat()">📝 <span class="label">New Chat</span></button>
+      <button class="btn" onclick="scrollHistoryTop()">🕘 <span class="label">History</span></button>
+      <button class="btn" onclick="openSettings()">⚙️ <span class="label">Settings</span></button>
+    </div>
+    <div id="history" class="history"></div>
+    <div class="footer-controls">
+      <div title="Toggle light/dark" class="switch" onclick="toggleTheme()"></div>
+      <span class="label" style="color:var(--muted)">Theme</span>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div style="font-weight:700">Welcome back</div>
+      <div class="search">
+        <input placeholder="Search chats" oninput="filterHistory(this.value)" />
+        <button class="btn" onclick="newChat()">New</button>
+      </div>
+    </header>
+    <section id="feed" class="feed">
+      <div class="msg fade-in"><div class="avatar">U</div><div class="bubble"><p>Hi! Show me how this UI works.</p></div></div>
+      <div class="msg fade-in"><div class="avatar ai">GPT</div><div class="bubble"><p>This is a static demo of a ChatGPT-like homepage: sidebar with navigation, a chat feed, and a composer. No backend calls, only front-end interactions.</p></div></div>
+    </section>
+    <div class="composer">
+      <div class="compose-bar">
+        <textarea id="composer" class="input" placeholder="Message ChatGPT" onkeydown="handleKey(event)"></textarea>
+        <button class="primary" onclick="send()">Send</button>
+      </div>
+      <div class="toolbar">
+        <span>Tip: Press</span>
+        <span class="kbd">Shift</span>+
+        <span class="kbd">Enter</span>
+        <span>for a new line</span>
+      </div>
+    </div>
+  </main>
+  <script>
+    const $ = (s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+    const state={ theme: localStorage.getItem('demo-theme')||'dark', chats: JSON.parse(localStorage.getItem('demo-chats')||'[]'), activeId:null };
+    function applyTheme(){ document.documentElement.classList.toggle('light', state.theme==='light'); localStorage.setItem('demo-theme', state.theme); }
+    function toggleTheme(){ state.theme = state.theme==='light'?'dark':'light'; applyTheme(); }
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+    function newChat(){ const id=uid(); const item={id,title:'New Chat',preview:'',ts:Date.now(),messages:[]}; state.chats.unshift(item); state.activeId=id; save(); renderHistory(); $('#feed').innerHTML=''; addSystem('Started a new chat'); }
+    function openSettings(){ addSystem('Settings are not functional in this demo.'); }
+    function addSystem(text){ const feed=$('#feed'); const node=document.createElement('div'); node.className='msg fade-in'; node.innerHTML=`<div class="avatar ai">GPT</div><div class="bubble"><p>${escapeHtml(text)}</p></div>`; feed.appendChild(node); feed.scrollTop=feed.scrollHeight; }
+    function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } }
+    function send(){ const ta=$('#composer'); const text=ta.value.trim(); if(!text) return; ta.value=''; appendMessage('user', text); setTimeout(()=>{ appendMessage('ai', `You said: "${escapeHtml(text)}"\n\n(This is a front-end only demo.)`); }, 400); }
+    function appendMessage(role,text){ const feed=$('#feed'); const msg=document.createElement('div'); msg.className='msg fade-in'; msg.innerHTML= role==='ai' ? `<div class="avatar ai">GPT</div><div class="bubble"><p>${formatText(text)}</p></div>` : `<div class="avatar">U</div><div class="bubble"><p>${formatText(text)}</p></div>`; feed.appendChild(msg); feed.scrollTop=feed.scrollHeight; ensureActive(); const chat=state.chats.find(c=>c.id===state.activeId) || createDefaultChat(); chat.messages.push({role,text,ts:Date.now()}); chat.preview = chat.messages[chat.messages.length-1].text.slice(0,60); if(chat.title==='New Chat' && chat.messages.length>=2){ chat.title = chat.messages[0].text.slice(0,28) || 'Chat'; } save(); renderHistory(); }
+    function createDefaultChat(){ const id=uid(); const item={id,title:'New Chat',preview:'',ts:Date.now(),messages:[]}; state.chats.unshift(item); state.activeId=id; return item; }
+    function ensureActive(){ if(!state.activeId){ if(state.chats.length===0) newChat(); else state.activeId=state.chats[0].id; } }
+    function renderHistory(filter=''){ const el=$('#history'); el.innerHTML=''; const list=state.chats.filter(c=>c.title.toLowerCase().includes(filter.toLowerCase())); list.forEach(c=>{ const item=document.createElement('div'); item.className='chat-item'; item.textContent=c.title||'Chat'; item.title=new Date(c.ts).toLocaleString(); item.onclick=()=>openChat(c.id); el.appendChild(item); }); }
+    function openChat(id){ state.activeId=id; const chat=state.chats.find(c=>c.id===id); if(!chat) return; const feed=$('#feed'); feed.innerHTML=''; chat.messages.forEach(m=>{ const role=m.role==='ai'?'ai':'user'; const msg=document.createElement('div'); msg.className='msg fade-in'; msg.innerHTML= role==='ai' ? `<div class=\"avatar ai\">GPT</div><div class=\"bubble\"><p>${formatText(m.text)}</p></div>` : `<div class=\"avatar\">U</div><div class=\"bubble\"><p>${formatText(m.text)}</p></div>`; feed.appendChild(msg); }); feed.scrollTop=feed.scrollHeight; }
+    function filterHistory(q){ renderHistory(q); }
+    function scrollHistoryTop(){ $('#history').scrollTo({top:0,behavior:'smooth'}); }
+    function save(){ localStorage.setItem('demo-chats', JSON.stringify(state.chats)); }
+    function formatText(t){ return escapeHtml(t).replace(/\n/g,'<br/>'); }
+    function escapeHtml(t){ return t.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    // initialize
+    applyTheme(); renderHistory(); ensureActive();
+  </script>
+</body>
+</html>
